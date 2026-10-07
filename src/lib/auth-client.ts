@@ -2,10 +2,7 @@ import { createAuthClient } from "better-auth/react";
 
 export const authClient = createAuthClient({
   // Same origin — next.config rewrite দিয়ে backend-এ যাবে
-  baseURL:
-    typeof window !== "undefined"
-      ? window.location.origin
-      : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://modina-agence-travel.vercel.app",
 
   fetchOptions: {
     credentials: "include",

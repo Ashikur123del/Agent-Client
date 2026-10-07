@@ -8,10 +8,7 @@ import {
  * Production → relative path (rewrite দিয়ে backend-এ যাবে)
  * Local → সরাসরি backend URL
  */
-const API_BASE_URL =
-    process.env.NODE_ENV === "production"
-        ? ""
-        : process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 /**
  * ১. সব এজেন্ট (Admin Only)

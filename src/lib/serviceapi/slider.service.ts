@@ -8,7 +8,7 @@ export const getSliders = async () => {
     });
 
     if (!res.ok) {
-      throw new Error("Failed to fetch sliders");
+      throw new Error(`Failed to fetch sliders: ${res.status} ${res.statusText} from ${API_URL}`);
     }
 
     const data = await res.json();

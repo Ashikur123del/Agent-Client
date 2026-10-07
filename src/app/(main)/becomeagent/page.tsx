@@ -174,7 +174,7 @@ const BecomeAgent: React.FC = () => {
             {/* Father's Name */}
             <div>
               <label className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700">
-                <FaUserTie className="text-emerald-600" /> Father's Name
+                <FaUserTie className="text-emerald-600" /> Father&apos;s Name
               </label>
               <input
                 type="text"
