@@ -1,45 +1,45 @@
 "use client";
 
-import { authClient } from "@/lib/auth-client";
 import { ReactNode, useEffect, useState } from "react";
+import { authClient } from "@/lib/auth-client";
 
-interface WithRoleProps {
+type Props = {
   roles: string[];
   children: ReactNode;
-  fallback?: ReactNode;
-}
+};
 
-// Agent cookie থেকে role বের করা
 function getAgentCookieRole(): string | null {
   if (typeof document === "undefined") return null;
-  const cookies = document.cookie.split(";").map((c) => c.trim());
-  const agentCookie = cookies.find((c) => c.startsWith("agent_verified="));
-  if (agentCookie) {
-    const val = agentCookie.split("=")[1];
-    if (val && val !== "" && val !== "false") return "agent";
-  }
-  return null;
+  const found = document.cookie
+    .split(";")
+    .map((c) => c.trim())
+    .find((c) => c.startsWith("agent_verified="));
+  if (!found) return null;
+  const val = found.split("=")[1];
+  return val && val !== "" && val !== "false" ? "agent" : null;
 }
 
-export default function WithRole({
-  roles,
-  children,
-  fallback = null,
-}: WithRoleProps) {
-  const { data: session } = authClient.useSession();
+function resolveRole(sessionRole?: string | null, agentCookie?: string | null) {
+  if (sessionRole === "admin") return "admin";
+  if (sessionRole === "agent") return "agent";
+  if (agentCookie === "agent") return "agent";
+  return "user";
+}
+
+export default function WithRole({ roles, children }: Props) {
+  const { data: session, isPending } = authClient.useSession();
   const [agentRole, setAgentRole] = useState<string | null>(null);
 
   useEffect(() => {
     setAgentRole(getAgentCookieRole());
   }, []);
 
-  const user = session?.user as (typeof session & { role?: string }) | undefined;
-  // Admin-এর session role অথবা Agent cookie-র role
-  const userRole = user?.role || agentRole || "user";
+  if (isPending) return null;
 
-  if (!roles.includes(userRole)) {
-    return <>{fallback}</>;
-  }
+  const sessionRole = (session?.user as { role?: string } | undefined)?.role;
+  const currentRole = resolveRole(sessionRole, agentRole);
+
+  if (!roles.includes(currentRole)) return null;
 
   return <>{children}</>;
 }

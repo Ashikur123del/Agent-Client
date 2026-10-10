@@ -75,47 +75,54 @@ const BecomeAgent: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
 
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("Password match kore nai");
-      setLoading(false);
-      return;
-    }
+  if (formData.password !== formData.confirmPassword) {
+    toast.error("Password match kore nai");
+    setLoading(false);
+    return;
+  }
 
-    const payload = {
-      ...formData,
-      bkashNumber: showBankAndBkash ? formData.bkashNumber : "",
-      bankAccountNumber: showBankAndBkash ? formData.bankAccountNumber : "",
-    };
-
-    try {
-      const res = await createAgent({
-        ...payload,
-        photo: photoFile,
-      });
-
-      toast.success(res?.message || "Agent application submitted successfully!");
-
-      setFormData(initialFormState);
-      if (photoPreview) URL.revokeObjectURL(photoPreview);
-      setPhotoFile(null);
-      setPhotoPreview(null);
-
-      setTimeout(() => {
-        router.push("/login");
-      }, 1500);
-    } catch (error: unknown) {
-      const errMessage =
-        error instanceof Error ? error.message : "Failed to submit registration";
-      toast.error(errMessage);
-    } finally {
-      setLoading(false);
-    }
+  const payload = {
+    ...formData,
+    bkashNumber: showBankAndBkash ? formData.bkashNumber : "",
+    bankAccountNumber: showBankAndBkash ? formData.bankAccountNumber : "",
   };
 
+  try {
+    const res = await createAgent({
+      ...payload,
+      photo: photoFile,
+    });
+
+    toast.success(res?.message || "Agent application submitted successfully!");
+
+    localStorage.clear();
+    document.cookie =
+      "agent_verified=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    document.cookie =
+      "better-auth.session_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    document.cookie =
+      "__Secure-better-auth.session_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+
+    setFormData(initialFormState);
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoFile(null);
+    setPhotoPreview(null);
+
+    setTimeout(() => {
+      router.push("/login");
+    }, 1500);
+  } catch (error: unknown) {
+    const errMessage =
+      error instanceof Error ? error.message : "Failed to submit registration";
+    toast.error(errMessage);
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <div className="w-full">
       {/* Page Header */}

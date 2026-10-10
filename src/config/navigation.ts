@@ -27,7 +27,7 @@ export const NAV_ITEMS: NavItem[] = [
         allowedRoles: ["admin", "agent"],
     },
 
-    // ---------- Admin only (website content) ----------
+    // ---------- Admin only ----------
     {
         label: "Hero Slider",
         href: "/heroslider",
@@ -59,7 +59,7 @@ export const NAV_ITEMS: NavItem[] = [
         allowedRoles: ["admin"],
     },
 
-    // ---------- Admin + Agent (Hajjah) ----------
+    // ---------- Admin + Agent ----------
     {
         label: "Create Hajjah",
         href: "/hajjahadd",
@@ -79,11 +79,11 @@ export const NAV_ITEMS: NavItem[] = [
         allowedRoles: ["admin", "agent"],
     },
 
-    // ---------- Profile ----------
+    // ---------- Agent only ----------
     {
         label: "My Profile",
         href: "/myprofile",
         icon: FaUserCircle,
-        allowedRoles: ["admin", "agent"],
+        allowedRoles: ["agent"],
     },
 ];

@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { FaBars, FaTimes, FaHome, FaSignOutAlt } from "react-icons/fa";
 import { authClient } from "@/lib/auth-client";
 import { NAV_ITEMS } from "@/config/navigation";
 import WithRole from "@/components/auth/WithRole";
 
-// Agent cookie থেকে role বের করা
 function getAgentCookieRole(): string | null {
   if (typeof document === "undefined") return null;
   const cookies = document.cookie.split(";").map((c) => c.trim());
@@ -19,24 +19,32 @@ function getAgentCookieRole(): string | null {
   return null;
 }
 
-export default function DashboardSidebar() {
+function resolveRole(
+  sessionRole?: string | null,
+  agentCookieRole?: string | null
+): "admin" | "agent" | "user" {
+  if (sessionRole === "admin") return "admin";
+  if (sessionRole === "agent") return "agent";
+  if (agentCookieRole === "agent") return "agent";
+  return "user";
+}
 
+export default function DashboardSidebar() {
+  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [agentRole, setAgentRole] = useState<string | null>(null);
 
   const { data: session } = authClient.useSession();
-  const user = session?.user as (typeof session & { role?: string }) | undefined;
+  const user = session?.user as { role?: string } | undefined;
 
   useEffect(() => {
     setAgentRole(getAgentCookieRole());
   }, []);
 
-  // Admin session role অথবা Agent cookie role
-  const userRole = user?.role || agentRole || "user";
+  const userRole = resolveRole(user?.role, agentRole);
 
   const handleLogout = async () => {
     try {
-      // 1. Better Auth session logout (Admin-এর জন্য)
       await authClient.signOut({
         fetchOptions: {
           onSuccess: () => {
@@ -47,28 +55,30 @@ export default function DashboardSidebar() {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      // 2. Agent Cookie & LocalStorage Clear (User/Agent-এর জন্য)
       clearSessionAndRedirect();
     }
   };
 
   const clearSessionAndRedirect = () => {
-    // Agent verified cookie ডিলিট করার নিয়ম (Past date দেওয়া)
-    document.cookie = "agent_verified=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-    document.cookie = "better-auth.session_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-    document.cookie = "__Secure-better-auth.session_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-    
-    // LocalStorage খালি করা
+    document.cookie =
+      "agent_verified=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    document.cookie =
+      "better-auth.session_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    document.cookie =
+      "__Secure-better-auth.session_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("agentData");
     localStorage.clear();
 
-    
     window.location.href = "/login";
   };
 
-  const closeSidebar = () => {
-    setSidebarOpen(false);
+  const closeSidebar = () => setSidebarOpen(false);
+
+  const isActive = (href: string) => {
+    if (href === "/dashboard") return pathname === "/dashboard";
+    return pathname === href || pathname.startsWith(`${href}/`);
   };
 
   return (
@@ -104,7 +114,7 @@ export default function DashboardSidebar() {
         />
       )}
 
-      {/* Sidebar Container */}
+      {/* Sidebar */}
       <aside
         className={`fixed left-0 top-0 z-50 flex h-screen w-72 flex-col bg-gradient-to-b from-teal-900 via-teal-800 to-emerald-950 text-white shadow-2xl shadow-emerald-950/30 transition-transform duration-300 lg:w-64 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
@@ -128,7 +138,7 @@ export default function DashboardSidebar() {
           </button>
         </div>
 
-        <div className="flex flex-1 flex-col overflow-y-auto px-4 py-6">
+        <div className="flex flex-1 flex-col overflow-y-auto p-2">
           <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.25em] text-cyan-200/70">
             {userRole === "admin"
               ? "Admin Menu"
@@ -137,18 +147,27 @@ export default function DashboardSidebar() {
               : "User Menu"}
           </p>
 
-          {/* Dynamic Navigation Links using WithRole */}
           <nav className="space-y-2">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
+              const active = isActive(item.href);
+
               return (
                 <WithRole key={item.href} roles={item.allowedRoles}>
                   <Link
                     href={item.href}
                     onClick={closeSidebar}
-                    className="group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-teal-100 transition hover:bg-white/10 hover:text-white"
+                    className={`group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${
+                      active
+                        ? "bg-white/15 text-white shadow-inner ring-1 ring-white/20"
+                        : "text-teal-100 hover:bg-white/10 hover:text-white"
+                    }`}
                   >
-                    <Icon className="h-4 w-4 text-cyan-300" />
+                    <Icon
+                      className={`h-4 w-4 ${
+                        active ? "text-cyan-200" : "text-cyan-300"
+                      }`}
+                    />
                     {item.label}
                   </Link>
                 </WithRole>
@@ -158,7 +177,6 @@ export default function DashboardSidebar() {
 
           <div className="flex-1" />
 
-          {/* Website Link & Logout */}
           <Link
             href="/"
             onClick={closeSidebar}
