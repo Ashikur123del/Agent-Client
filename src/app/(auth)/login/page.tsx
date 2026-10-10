@@ -58,50 +58,29 @@ function LoginForm() {
 
     const callbackUrl = getSafeCallbackUrl(searchParams.get("callbackUrl"));
 
-    try {
-      if (loginType === "user") {
-        // Agent login: mobile + password (shudhu digit pathano hoy)
-        const data = await verifyAgent(mobileNo.replace(/\D/g, ""), userPassword);
+  
+try {
+  const data = await verifyAgent(
+    mobileNo.replace(/\D/g, ""),
+    userPassword
+  );
 
-        if (data?.agent) {
-          localStorage.setItem("agentData", JSON.stringify(data.agent));
+  if (data.success && data.agent) {
+    localStorage.setItem(
+      "agentData",
+      JSON.stringify(data.agent)
+    );
 
-          // Session cookie backend theke already set hoyeche.
-          // Hard navigation: middleware notun cookie shathe shathe pabe.
-          window.location.href = callbackUrl;
-        } else {
-          setError(data?.message || "Agent verification failed.");
-        }
-      } else {
-        // Admin Login
-        await handleSignIn(
-          { email, password },
-          () => {
-            window.location.href = callbackUrl;
-          },
-          (errMsg) => {
-            setError(errMsg);
-          }
-        );
-      }
-    } catch (err: unknown) {
-      console.error("Login verification error:", err);
-
-      let message = "Login failed. Please check your network or inputs.";
-      if (err instanceof Error) {
-        if (err.message.includes("link nai")) {
-          message =
-            "This mobile number is not linked to any agent account. Please apply to become an agent first.";
-        } else if (err.message.includes("pawa jay nai")) {
-          message = "No agent found with this mobile number.";
-        } else if (err.message.includes("Password bhul")) {
-          message = "Incorrect password.";
-        } else {
-          message = err.message;
-        }
-      }
-      setError(message);
-    } finally {
+    window.location.href = callbackUrl;
+  }
+} catch (error) {
+  setError(
+    error instanceof Error
+      ? error.message
+      : "Agent login failed"
+  );
+}
+ finally {
       setLoading(false);
     }
   };

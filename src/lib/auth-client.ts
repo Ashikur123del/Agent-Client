@@ -1,28 +1,8 @@
-// import { createAuthClient } from "better-auth/react";
-
-// export const authClient = createAuthClient({
-
-//   baseURL: process.env.NEXT_PUBLIC_API_URL,
-
-//   fetchOptions: {
-//     credentials: "include",
-//   },
-
-//   user: {
-//     additionalFields: {
-//       role: {
-//         type: "string",
-//       },
-//     },
-//   },
-// });
-
-
 import { createAuthClient } from "better-auth/react";
 
 export const authClient = createAuthClient({
-  // Empty space ba window.location.origin use korle Same-Origin request hobe
-  baseURL: typeof window !== "undefined" ? window.location.origin : "",
+  // Same origin — next.config rewrite দিয়ে backend-এ যাবে
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://modina-agence-travel.vercel.app",
 
   fetchOptions: {
     credentials: "include",
@@ -36,5 +16,3 @@ export const authClient = createAuthClient({
     },
   },
 });
-
-
