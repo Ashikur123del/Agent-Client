@@ -5,17 +5,15 @@ const BACKEND_URL = (
 ).replace(/\/$/, "");
 
 const nextConfig: NextConfig = {
-
   experimental: {
     serverActions: {
       bodySizeLimit: "2mb",
     },
   },
 
-
   async rewrites() {
     return [
-      // সব /api/* backend-এ যাবে (auth + agents + hajjah + ...)
+      // সব /api/* backend-এ যাবে
       {
         source: "/api/:path*",
         destination: `${BACKEND_URL}/api/:path*`,
@@ -23,13 +21,11 @@ const nextConfig: NextConfig = {
     ];
   },
 
-
-
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com" },
       { protocol: "https", hostname: "images.unsplash.com" },
-      { protocol: "https", hostname: "*.thrillist.com" }, // Thrillist এর সব ছবির জন্য
+      { protocol: "https", hostname: "*.thrillist.com" },
       { protocol: "https", hostname: "assets3.thrillist.com" },
     ],
   },

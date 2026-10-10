@@ -5,10 +5,13 @@ import {
 } from "@/types/agent.type";
 
 /**
- * Production → relative path (rewrite দিয়ে backend-এ যাবে)
- * Local → সরাসরি backend URL
+ * Development → সরাসরি backend URL
+ * Production  → relative path (Next.js rewrite দিয়ে backend-এ যাবে → same-origin)
  */
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE_URL =
+    process.env.NODE_ENV === "development"
+        ? process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+        : "";
 
 /**
  * ১. সব এজেন্ট (Admin Only)

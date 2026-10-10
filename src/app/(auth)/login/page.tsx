@@ -16,7 +16,6 @@ import { handleSignIn } from "@/lib/auth-service";
 import { verifyAgent } from "@/lib/serviceapi/agent/api";
 import H1 from "@/assets/H-1.avif";
 
-// Only allow internal paths (blocks open redirect like ?callbackUrl=https://evil.com)
 function getSafeCallbackUrl(raw: string | null): string {
   const fallback = "/dashboard";
   if (!raw) return fallback;
@@ -31,12 +30,10 @@ function LoginForm() {
 
   const [loginType, setLoginType] = useState<"user" | "admin">("user");
 
-  // User / Agent Login Fields
   const [mobileNo, setMobileNo] = useState("");
   const [userPassword, setUserPassword] = useState("");
   const [showUserPassword, setShowUserPassword] = useState(false);
 
-  // Admin Login Fields
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -58,29 +55,53 @@ function LoginForm() {
 
     const callbackUrl = getSafeCallbackUrl(searchParams.get("callbackUrl"));
 
-  
-try {
-  const data = await verifyAgent(
-    mobileNo.replace(/\D/g, ""),
-    userPassword
-  );
+    try {
+      if (loginType === "user") {
+        // Agent login (mobile + password)
+        const data = await verifyAgent(
+          mobileNo.replace(/\D/g, ""),
+          userPassword
+        );
 
-  if (data.success && data.agent) {
-    localStorage.setItem(
-      "agentData",
-      JSON.stringify(data.agent)
-    );
+        if (data?.success && data?.agent) {
+          // Client-side flag (optional) — Better Auth session cookie backend থেকে আসবে
+          const isSecure =
+            typeof window !== "undefined" &&
+            window.location.protocol === "https:";
 
-    window.location.href = callbackUrl;
-  }
-} catch (error) {
-  setError(
-    error instanceof Error
-      ? error.message
-      : "Agent login failed"
-  );
-}
- finally {
+          localStorage.setItem("agentData", JSON.stringify(data.agent));
+
+          document.cookie = [
+            "agent_verified=true",
+            "path=/",
+            `max-age=${60 * 60 * 24 * 7}`,
+            "SameSite=Lax",
+            isSecure ? "Secure" : "",
+          ]
+            .filter(Boolean)
+            .join("; ");
+
+          // Full page reload — cookie properly set হওয়ার পর dashboard-এ যাবে
+          window.location.href = callbackUrl;
+        } else {
+          setError(data?.message || data?.error || "Agent login failed");
+        }
+      } else {
+        // Admin login (email + password) — Better Auth
+        await handleSignIn(
+          { email, password },
+          () => {
+            window.location.href = callbackUrl;
+          },
+          (errMsg) => {
+            setError(errMsg);
+          }
+        );
+      }
+    } catch (err: unknown) {
+      console.error("Login Error:", err);
+      setError(err instanceof Error ? err.message : "Login failed");
+    } finally {
       setLoading(false);
     }
   };
@@ -88,7 +109,7 @@ try {
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50/50 via-white to-amber-50/40">
       <div className="grid min-h-screen lg:grid-cols-2">
-        {/* Left Visual Banner Section */}
+        {/* Left Banner */}
         <div className="relative hidden lg:block">
           <Image
             src={H1}
@@ -100,10 +121,10 @@ try {
           />
         </div>
 
-        {/* Right Form Section */}
+        {/* Right Form */}
         <div className="flex items-center justify-center px-6 py-12 sm:px-10">
           <div className="w-full max-w-md">
-            {/* Login Type Switcher */}
+            {/* Tab Switcher */}
             <div className="mb-6 flex rounded-2xl bg-slate-100 p-1.5 shadow-inner">
               <button
                 type="button"
@@ -129,6 +150,7 @@ try {
               </button>
             </div>
 
+            {/* Title */}
             <div className="mb-8">
               <h2 className="text-3xl font-extrabold text-slate-900">
                 {loginType === "user" ? "Agent Verification" : "Admin Sign In"}
@@ -140,16 +162,18 @@ try {
               </p>
             </div>
 
+            {/* Error */}
             {error && (
               <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
                 {error}
               </div>
             )}
 
+            {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
               {loginType === "user" ? (
                 <>
-                  {/* MOBILE NUMBER FIELD */}
+                  {/* Mobile */}
                   <div>
                     <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-700">
                       Mobile Number
@@ -167,7 +191,7 @@ try {
                     </div>
                   </div>
 
-                  {/* USER / AGENT PASSWORD FIELD */}
+                  {/* Password */}
                   <div>
                     <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-700">
                       Password
@@ -194,7 +218,7 @@ try {
                 </>
               ) : (
                 <>
-                  {/* ADMIN EMAIL FIELD */}
+                  {/* Admin Email */}
                   <div>
                     <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-700">
                       Admin Email
@@ -212,7 +236,7 @@ try {
                     </div>
                   </div>
 
-                  {/* ADMIN PASSWORD FIELD */}
+                  {/* Admin Password */}
                   <div>
                     <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-700">
                       Password
@@ -239,6 +263,7 @@ try {
                 </>
               )}
 
+              {/* Submit */}
               <button
                 type="submit"
                 disabled={loading}
@@ -253,6 +278,7 @@ try {
               </button>
             </form>
 
+            {/* Become Agent Link */}
             <p className="mt-6 text-center text-sm text-slate-600">
               New Agent?{" "}
               <Link
