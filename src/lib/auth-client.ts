@@ -1,16 +1,14 @@
 import { createAuthClient } from "better-auth/react";
 
-const isBrowser = typeof window !== "undefined";
-
 export const authClient = createAuthClient({
-  // Browser e same-origin (/backend proxy use করার জন্য) অথবা Fallback URL
-  baseURL: isBrowser
-    ? window.location.origin
-    : process.env.NEXT_PUBLIC_API_URL || "https://modina-agence-travel.vercel.app",
-  basePath: "/backend/api/auth",
+  // baseURL খালি রাখলে বা window.location.origin দিলে এটি বর্তমান ফ্রন্টএন্ড ডোমেইন ব্যবহার করবে
+  // এবং Next.js rewrites এর মাধ্যমে রিকোয়েস্ট ব্যাকএন্ডে চলে যাবে (Same-origin)
+  baseURL: typeof window !== "undefined" ? window.location.origin : "",
+
   fetchOptions: {
     credentials: "include",
   },
+
   user: {
     additionalFields: {
       role: {
