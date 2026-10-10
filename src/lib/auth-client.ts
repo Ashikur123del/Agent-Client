@@ -1,21 +1,13 @@
 import { createAuthClient } from "better-auth/react";
 
-const isBrowser = typeof window !== "undefined";
-
 export const authClient = createAuthClient({
-  // Browser e nijer domain (same origin), server render e fallback
-  baseURL: isBrowser
-    ? window.location.origin
-    : process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
-
-  // next.config.ts er rewrite: /backend/api/auth/* -> backend /api/auth/*
-  basePath: "/backend/api/auth",
+  // Same origin — next.config rewrite দিয়ে backend-এ যাবে
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://modina-agence-travel.vercel.app",
 
   fetchOptions: {
     credentials: "include",
   },
 
-  // Custom user fields (role) TypeScript ke bojhanor jonno
   user: {
     additionalFields: {
       role: {
